@@ -511,9 +511,14 @@ gui2::tbutton* create_context_button(display& disp, const std::string& main, con
 
 	widget->set_visible(gui2::twidget::INVISIBLE);
 
-	const std::string prefix = std::string("buttons/") + game_config::app + "/";
+	std::stringstream file;
+	file << std::string("buttons/");
+	if (!game_config::app.empty()) {
+		file << game_config::app << "/";
+	}
+	file << id << ".png";
 	// set surface
-	surface surf = image::get_image(prefix + id + ".png");
+	surface surf = image::get_image(file.str());
 	if (surf) {
 		widget->set_surface(surf, width, height);
 	}

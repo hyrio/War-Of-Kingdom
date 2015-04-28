@@ -105,10 +105,13 @@ tbook::tbook(display& disp, gamemap* map, hero_map& heros, const config& game_co
 	} else if (screen_width < 800 || screen_height < 600) {
 		tintegrate::screen_ratio = 1.5;
 	}
+	help::book_toplevel = &toplevel;
 }
 
 tbook::~tbook()
 {
+	help::book_toplevel = NULL;
+
 	tintegrate::screen_ratio = 1;
 	toplevel.clear();
 	help::clear_book();
@@ -259,10 +262,3 @@ void tbook::section_2_tv_internal(ttree_view_node& htvroot, const help::section&
 }
 
 } // namespace gui2
-
-namespace help {
-bool find_topic2(const std::string& dst)
-{
-	return !!find_topic(gui2::toplevel, dst);
-}
-}

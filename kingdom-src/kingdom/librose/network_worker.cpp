@@ -185,7 +185,15 @@ bool receive_with_timeout(tsock& info, char* buf, size_t nbytes,
 		const int bytes_read = receive_bytes(s, buf, nbytes);
 		if (bytes_read == 0) {
 			// network exception. for example connection broken.
-			return false;
+
+			// to some case, receiver doesn't know how many bytes will received, so set a subjective nbytes. for example http first read.
+			// if total receivable bytes isn't larger nbytes. next receive will result to return bytes_read = 0!
+			// in this case(ret_size!=NULL) think successfully once has recieved data.
+			if (!ret_size || !*ret_size) {
+				return false;
+			} else {
+				return true;
+			}
 		} else if (bytes_read < 0) {
 #if defined(EAGAIN) && !defined(_WIN32)
 			if (errno == EAGAIN)
@@ -1019,22 +1027,19 @@ bool close_socket(TCPsocket sock)
 
 TCPsocket detect_error()
 {
-	for(size_t shard = 0; shard != NUM_SHARDS; ++shard) {
+	for (size_t shard = 0; shard != NUM_SHARDS; ++shard) {
 		const threading::lock lock(*shard_mutexes[shard]);
-		if(socket_errors[shard] > 0) {
-			for(socket_state_map::iterator i = sockets_locked[shard].begin(); i != sockets_locked[shard].end();) {
-				if(i->second == SOCKET_ERRORED) {
-					--socket_errors[shard];
+		if (socket_errors[shard] > 0) {
+			for (socket_state_map::iterator i = sockets_locked[shard].begin(); i != sockets_locked[shard].end();) {
+				if (i->second == SOCKET_ERRORED) {
+					-- socket_errors[shard];
 					const TCPsocket sock = i->first;
 					sockets_locked[shard].erase(i++);
 					pending_receives[shard].erase(std::remove(pending_receives[shard].begin(),pending_receives[shard].end(),sock),pending_receives[shard].end());
 					remove_buffers(sock);
 					return sock;
 				}
-				else
-				{
-					++i;
-				}
+				++ i;
 			}
 		}
 

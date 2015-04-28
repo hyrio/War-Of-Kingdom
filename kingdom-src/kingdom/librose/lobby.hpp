@@ -290,7 +290,9 @@ public:
 	public:
 		thandler();
 		virtual ~thandler();
+		virtual void handle_status(int at, tsock::ttype type) {}
 		virtual bool handle_raw(int at, tsock::ttype type, const char* param[]) { return false; }
+		virtual bool handle_raw2(int at, tsock::ttype type, const char* data, int len) { return false; }
 		virtual bool handle(int tag, tsock::ttype type, const config& data) { return false; }
 		void join();
 
@@ -419,6 +421,7 @@ public:
 		void process();
 		SOCKET_STATE receive_buf(std::vector<char>& buf);
 		bool ready() const { return conn_ != network::null_connection; }
+		void reset_connect();
 	};
 
 	class ttransit_sock: public tsock
@@ -466,6 +469,7 @@ public:
 	bool insert_accept_sock(TCPsocket sock);
 
 	void process(events::pump_info&);
+	void broadcast_handle_status(int at, tsock::ttype type);
 	void broadcast_handle_raw(int at, tsock::ttype type, const char* param[]);
 
 	void add_log(const tsock& sock, const std::string& msg);

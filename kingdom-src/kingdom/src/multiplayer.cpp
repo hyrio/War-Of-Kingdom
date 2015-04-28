@@ -176,8 +176,6 @@ public:
 	http_agent(display& disp, hero_map& heros, bool check_server_match = true);
 	~http_agent();
 
-	network::connection connection() const { return sock_; }
-
 	bool do_register(bool check_exist);
 	membership do_session(bool quiet);
 	membership do_membership(bool quiet, int uid, const std::string& username);
@@ -253,9 +251,7 @@ http_agent::http_agent(display& disp, hero_map& heros, bool check_server_match)
 
 http_agent::~http_agent() 
 {
-	if (sock_ != network::null_connection) {
-		network::disconnect(sock_); 
-	}
+	lobby->http.reset_connect();
 }
 
 bool http_agent::do_prepare(bool check_network, bool quiet)
@@ -278,9 +274,11 @@ bool http_agent::do_prepare(bool check_network, bool quiet)
 			game_config::timestamp = m.timestamp;
 		}
 	}
-	sock_ = dialogs::network_connect_dialog(disp_, "", game_config::bbs_server.host, game_config::bbs_server.port, quiet);
 
-	return sock_;
+	lobby->http.set_host(game_config::bbs_server.host, game_config::bbs_server.port);
+	bool ret = dialogs::network_connect_dialog(disp_, "", game_config::bbs_server.host, game_config::bbs_server.port, quiet);
+	sock_ = lobby->http.conn();
+	return ret;
 }
 
 std::string http_agent::form_url(const std::string& task) const
@@ -495,6 +493,8 @@ bool http_agent::do_register(bool check_exist)
 	if (commerce_protection(disp_, "http_agent::do_register()")) {
 		return ret;
 	}
+
+	
 
 	return ret;
 }
@@ -1551,6 +1551,7 @@ membership http_agent::do_employee_insert(hero_map& heros)
 		return member;
 	}
 
+	
 	return member;
 }
 
@@ -2359,6 +2360,7 @@ std::string calculate_res_checksum(display& disp, const config& game_config)
 	}
 
 	
+
 	return ret;
 }
 

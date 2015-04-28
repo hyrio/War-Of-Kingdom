@@ -327,12 +327,12 @@ void tintegrate::handle_ref_cfg(int tag_start, const config &cfg)
 	}
 
 	int start = forward_pos(tag_start, "text");
-	if (!help::find_topic2(dst) && !force) {
-		// detect the broken link but quietly silence the hyperlink for normal user
-		add_text_item(tag_start, start, text, default_font_color_, "", true);
+	if (force || (!help::book_toplevel || help::find_topic(*help::book_toplevel, dst))) {
+		add_text_item(tag_start, start, text, default_font_color_, dst);
 
 	} else {
-		add_text_item(tag_start, start, text, default_font_color_, dst);
+		// detect the broken link but quietly silence the hyperlink for normal user
+		add_text_item(tag_start, start, text, default_font_color_, "", true);
 	}
 
 }

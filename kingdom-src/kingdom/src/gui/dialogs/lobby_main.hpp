@@ -54,7 +54,7 @@ struct tlobby_chat_window
 	int pending_messages;
 };
 
-class tlobby_main : public tchat_, public lobby_base, public tlobby::thandler
+class tlobby_main : public tchat_, public lobby_base
 {
 public:
 	tlobby_main(const config& game_config, lobby_info& info, display& disp, hero_map& heros, hero_map& heros_start);

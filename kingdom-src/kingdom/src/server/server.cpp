@@ -2886,7 +2886,45 @@ void server::update_game_in_lobby(const wesnothd::game* g, network::connection e
 
 #include "display.hpp"
 #include "gui/widgets/window.hpp"
-void handle_app_event(Uint32 type)
+#include "help.hpp"
+#include "hero.hpp"
+
+/*
+ * rose require callback
+ */
+void set_zoom_to_default(int zoom)
+{
+	display::default_zoom_ = zoom;
+	image::set_zoom(display::default_zoom_);
+}
+
+namespace help {
+std::vector<topic> generate_topics(const bool sort_generated, const std::string &generator)
+{
+	std::vector<topic> res;
+	return res;
+}
+
+void generate_sections(const config *help_cfg, const std::string &generator, section &sec, int level)
+{
+	return;
+}
+}
+
+namespace http {
+bool register_user(display& disp, hero_map& heros, bool check_exist)
+{
+	return true;
+}
+}
+
+// anim_area
+int app_fill_anim_tags(std::map<const std::string, int>& tags)
+{
+	return area_anim::MAX_ROSE_ANIM;
+}
+
+void app_fill_anim(int type, const config& cfg)
 {
 }
 
@@ -2896,6 +2934,21 @@ int app_show_preferences_dialog(display& disp, bool first)
 	return twindow::OK;
 }
 }
+
+void handle_app_event(Uint32 type)
+{
+}
+
+bool hero::check_valid() const
+{
+	return true;
+}
+
+bool hero::confirm_carry_to(hero& h2, int carry_to)
+{
+	return true;
+}
+
 
 int main(int argc, char** argv) {
 	int port = 15000;

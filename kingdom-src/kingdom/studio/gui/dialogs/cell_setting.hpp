@@ -75,11 +75,7 @@ struct tscroll_mode
 		, id()
 		, description(description)
 	{
-		if (val == tscrollbar_container::auto_visible_first_run) {
-			id = "initial_auto"; // default
-		} else if (val == tscrollbar_container::always_visible) {
-			id = "always";
-		} else if (val == tscrollbar_container::always_invisible) {
+		if (val == tscrollbar_container::always_invisible) {
 			id = "never";
 		} else if (val == tscrollbar_container::auto_visible) {
 			id = "auto";
@@ -111,8 +107,8 @@ struct tcell_setting {
 	{
 		widget.cell.border_size_ = 0;
 		widget.cell.flags_ = gui2::tgrid::HORIZONTAL_ALIGN_CENTER | gui2::tgrid::VERTICAL_ALIGN_CENTER;
-		widget.horizontal_mode = tscrollbar_container::auto_visible_first_run;
-		widget.vertical_mode = tscrollbar_container::auto_visible_first_run;
+		widget.horizontal_mode = tscrollbar_container::auto_visible;
+		widget.vertical_mode = tscrollbar_container::auto_visible;
 
 		widget.tree_view.indention_step_size = 0;
 		widget.tree_view.node_id = "node";

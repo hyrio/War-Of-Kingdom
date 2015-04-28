@@ -84,10 +84,6 @@ public:
 
 	/** The way to handle the showing or hiding of the scrollbar. */
 	enum tscrollbar_mode {
-		always_visible,           /**<
-		                           * The scrollbar is always shown, whether
-		                           * needed or not.
-		                           */
 		always_invisible,         /**<
 		                           * The scrollbar is never shown even not
 		                           * when needed. There's also no space
@@ -100,25 +96,12 @@ public:
 		                           * reserved, just in case it's needed after
 		                           * the initial sizing (due to adding items).
 		                           */
-		auto_visible_first_run    /**<
-		                           * Like auto_visible, but when not needed
-		                           * upon the initial layout phase, the bars
-		                           * are not shown and no space is reserved
-		                           * for them. (The algorithm hides them by
-		                           * default.
-		                           */
 	};
 
 	/***** ***** ***** ***** layout functions ***** ***** ***** *****/
 
 	/** Inherited from tcontainer_. */
 	void layout_init(const bool full_initialization);
-
-	/** Inherited from twidget. */
-	void request_reduce_height(const unsigned maximum_height);
-
-	/** Inherited from tcontrol. */
-	void request_reduce_width(const unsigned maximum_width);
 
 	/** Inherited from tcontainer_. */
 	bool can_wrap() const

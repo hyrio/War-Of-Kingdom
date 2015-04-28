@@ -1476,7 +1476,9 @@ hero_map::hero_map(const std::string& path) :
 	map_(NULL),
 	map_vsize_(0)
 {
-	hero::image_file_root_ = path + "/data/core/images";
+	if (!path.empty()) {
+		hero::image_file_root_ = path + "/data/core/images";
+	}
 }
 
 hero_map::~hero_map()

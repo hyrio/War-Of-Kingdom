@@ -39,7 +39,7 @@ class ttabbar;
 class ttree_view;
 class tlistbox;
 
-class tchat_: public tdialog
+class tchat_: public tdialog, public tlobby::thandler
 {
 public:
 	static std::string err_encode_str;
@@ -97,9 +97,11 @@ public:
 		int current_page;
 	};
 
-	tchat_(display& disp, tgroup& g, int min_page, int chat_page, int chating_page);
+	tchat_(display& disp, int min_page, int chat_page, int chating_page);
 	virtual ~tchat_();
 
+	virtual void handle_status(int at, tsock::ttype type);
+	virtual bool handle_raw(int at, tsock::ttype type, const char* param[]);
 protected:
 	/** Inherited from tdialog. */
 	void pre_show(twindow& window);
@@ -161,7 +163,6 @@ protected:
 
 	void swap_page(twindow& window, int page, bool swap);
 
-	virtual bool handle_raw(int at, tsock::ttype type, const char* param[]);
 	void toggle_tabbar(twidget* widget);
 	void click_tabbar(twidget* widget, const std::string& sparam);
 
@@ -211,7 +212,6 @@ protected:
 
 private:
 	display& disp_;
-	tgroup& group_;
 	twindow* window_;
 	ttree_view* person_tree_;
 	ttree_view* channel_tree_;
@@ -241,10 +241,10 @@ private:
 	int chat_page_;
 };
 
-class tchat2: public tchat_, public tlobby::thandler
+class tchat2: public tchat_
 {
 public:
-	explicit tchat2(display& disp, tgroup& g);
+	explicit tchat2(display& disp);
 
 private:
 	/** Inherited from tdialog, implemented by REGISTER_DIALOG. */
@@ -256,7 +256,7 @@ private:
 	enum {NONE_PAGE, MIN_PAGE, CHAT_PAGE = MIN_PAGE, CHATING_PAGE, MAX_PAGE = CHATING_PAGE};
 	void sheet_toggled(twidget* widget);
 	
-	bool handle_raw(int tag, tsock::ttype type, const char* word[]);
+	void handle_status(int at, tsock::ttype type);
 
 	void update_network_status(twindow& window, bool connected);
 

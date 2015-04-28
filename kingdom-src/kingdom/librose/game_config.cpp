@@ -46,6 +46,7 @@ namespace game_config
 {
 	std::string app;
 	std::string app_channel;
+	std::string app_msgid;
 	int base_income = 2;
 	int village_income = 2;
 	int hero_income = 2;

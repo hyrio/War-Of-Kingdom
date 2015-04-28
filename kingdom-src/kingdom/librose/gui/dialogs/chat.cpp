@@ -260,9 +260,8 @@ bool tchat_::tsession::can_next() const
 
 std::string tchat_::err_encode_str;
 
-tchat_::tchat_(display& disp, tgroup& g, int min_page, int chat_page, int chating_page)
+tchat_::tchat_(display& disp, int min_page, int chat_page, int chating_page)
 	: disp_(disp)
-	, group_(g)
 	, signature_(0)
 	, person_cookies_()
 	, channel_cookies_()
@@ -286,6 +285,11 @@ tchat_::tchat_(display& disp, tgroup& g, int min_page, int chat_page, int chatin
 	, catalog_(new ttabbar(true, false, "icon40"))
 	, toolbar_(new ttabbar(false, false, "icon36"))
 {
+	// application maybe enter chat directly.
+	// chat_::pre_show some action require lobby.chat to right state. for example channels/persons.
+	events::pump_info info;
+	lobby->process(info);
+
 	if (err_encode_str.empty()) {
 		err_encode_str = dgettext("wesnoth-lib", "Character encoding must be UTF-8!");
 	}
@@ -1750,15 +1754,17 @@ void tchat_::chat_2_scroll_label(tscroll_label& label, const tsession& sess)
 	widget->refresh_locator_anim(locator);
 }
 
-bool tchat_::handle_raw(int at, tsock::ttype type, const char* param[])
+void tchat_::handle_status(int at, tsock::ttype type)
 {
-	if (!gui_ready()) {
-		return false;
+	if (at != tlobby::tag_chat) {
+		return;
 	}
-
+	if (!gui_ready()) {
+		return;
+	}
 	if (type == tsock::t_connected) {
 		find_->set_active(true);
-		return false;
+		return;
 
 	} else if (type == tsock::t_disconnected) {
 		for (std::map<int, tlobby_channel>::iterator it = lobby->chat.channels.begin(); it != lobby->chat.channels.end(); ++ it) {
@@ -1792,6 +1798,15 @@ bool tchat_::handle_raw(int at, tsock::ttype type, const char* param[])
 				refresh_toolbar(current_ft_, current_session_->receiver->id);
 			}
 		}
+	}
+}
+
+bool tchat_::handle_raw(int at, tsock::ttype type, const char* param[])
+{
+	if (at != tlobby::tag_chat) {
+		return false;
+	}
+	if (!gui_ready()) {
 		return false;
 	}
 
@@ -1880,8 +1895,8 @@ void tchat_::swap_page(twindow& window, int page, bool swap)
 	current_page_ = page;
 }
 
-tchat2::tchat2(display& disp, tgroup& g)
-	: tchat_(disp, g, MIN_PAGE, CHAT_PAGE, CHATING_PAGE)
+tchat2::tchat2(display& disp)
+	: tchat_(disp, MIN_PAGE, CHAT_PAGE, CHATING_PAGE)
 	, disp_(disp)
 {
 }
@@ -1923,18 +1938,16 @@ void tchat2::pre_show(CVideo& /*video*/, twindow& window)
 	join();
 }
 
-bool tchat2::handle_raw(int at, tsock::ttype type, const char* param[])
+void tchat2::handle_status(int at, tsock::ttype type)
 {
 	if (at != tlobby::tag_chat) {
-		return false;
+		return;
 	}
 
-	if (type == tsock::t_connected || type == tsock::t_disconnected) {
-		update_network_status(*page_panel_->get_window(), type == tsock::t_connected);
-		process_network_status(type == tsock::t_connected);
-	}
+	update_network_status(*page_panel_->get_window(), type == tsock::t_connected);
+	process_network_status(type == tsock::t_connected);
 
-	return tchat_::handle_raw(at, type, param);
+	tchat_::handle_status(at, type);
 }
 
 void tchat2::update_network_status(twindow& window, bool connected)

@@ -14,6 +14,8 @@
 */
 
 #include "global.hpp"
+
+#include "base_instance.hpp"
 #include "SDL.h"
 #include "SDL_mixer.h"
 
@@ -210,19 +212,13 @@ private:
 
 }
 
-void regenerate_heros(hero_map& heros);
-
-class game_controller
+class game_instance: public base_instance
 {
 public:
-	game_controller(int argc, char** argv);
-	~game_controller();
+	game_instance(int argc, char** argv);
+	~game_instance();
 
-	display& disp();
-
-	bool init_video();
-	bool init_config(const bool force=false);
-	bool init_language();
+	bool init_config(const bool force);
 	bool play_screenshot_mode();
 
 	void reload_changed_game_config();
@@ -234,7 +230,6 @@ public:
 	void level_to_gamestate(bool fog, bool shroud, const std::string& map_data = null_str, bool modify_placing = false);
 	int new_campaign(int catalog);
 	void play_multiplayer(bool random_map);
-	bool change_language();
 	void inapp_purchase();
 	
 	void show_preferences();
@@ -244,9 +239,8 @@ public:
 	editor::EXIT_STATUS start_editor(const std::string& map_data = "");
 
 	void start_wesnothd();
-	const config& game_config() const { return game_config_; }
 
-	hero_map& heros() { return heros_; }
+	void regenerate_heros(hero_map& heros, bool allow_empty);
 
 	void start_siege_game(bool subcontinent);
 	void start_scenario_game(bool subcontinent);
@@ -254,348 +248,55 @@ public:
 
 	bool session_xmited() const { return session_xmited_; }
 	void set_session_xmited(bool val) { session_xmited_ = val; }
-private:
-	game_controller(const game_controller&);
-	void operator=(const game_controller&);
 
-	void load_game_cfg(const bool force=false);
+private:
+	void load_game_cfg(const bool force);
 	void load_campaign_cfg();
 	void set_unit_data(config& gc);
 
 	void mark_completed_campaigns(std::vector<config>& campaigns);
 
 private:
-	const int argc_;
-	int arg_;
-	const char* const * const argv_;
-
-	//this should get destroyed *after* the video, since we want
-	//to clean up threads after the display disappears.
-	const threading::manager thread_manager;
-
-	surface icon_;
-	CVideo video_;
-	
-	const font::manager font_manager_;
-	const preferences::manager prefs_manager_;
-	const image::manager image_manager_;
-	const events::event_context main_event_context_;
-	sound::music_thinker music_thinker_;
-	binary_paths_manager paths_manager_;
-
 	bool screenshot_mode_;
 	std::string screenshot_map_, screenshot_filename_;
-	int force_bpp_;
 
-	config game_config_;
-	config game_config_core_;
-	hero_map heros_;
 	hero_map heros_start_;
-	preproc_map old_defines_map_;
 	card_map cards_;
 
 	std::vector<bool> checked_card_;
-
-	util::scoped_ptr<display> disp_;
-
 	game_state state_;
 
-	game_config::config_cache& cache_;
 	bool session_xmited_;
 };
 
-game_controller::game_controller(int argc, char** argv) :
-	argc_(argc),
-	arg_(1),
-	argv_(argv),
-	thread_manager(),
-	icon_(),
-	video_(),
-	font_manager_(),
-	prefs_manager_(),
-	image_manager_(),
-	main_event_context_(),
-	music_thinker_(),
-	paths_manager_(),
-	screenshot_mode_(false),
-	screenshot_map_(),
-	screenshot_filename_(),
-	force_bpp_(-1),
-	game_config_(),
-	game_config_core_(),
-	heros_(game_config::path),
-	cards_(game_config::path),
-	checked_card_(),
-	old_defines_map_(),
-	disp_(NULL),
-	state_(),
-	cache_(game_config::config_cache::instance()),
-	session_xmited_(false)
+game_instance::game_instance(int argc, char** argv)
+	: base_instance(argc, argv)
+	, screenshot_mode_(false)
+	, screenshot_map_()
+	, screenshot_filename_()
+	, cards_(game_config::path)
+	, checked_card_()
+	, state_()
+	, session_xmited_(false)
 {
-	bool no_music = false;
-	bool no_sound = false;
-
-	// if allocate static, iOS may be not align 4! 
-	// it necessary to ensure align great equal than 4.
-	game_config::savegame_cache = (unsigned char*)malloc(game_config::savegame_cache_size);
-
-	// The path can be hardcoded and it might be a relative path.
-	if(!game_config::path.empty() &&
-#ifdef _WIN32
-		// use c_str to ensure that index 1 points to valid element since c_str() returns null-terminated string
-		game_config::path.c_str()[1] != ':'
-#else
-		game_config::path[0] != '/'
-#endif
-	)
-	{
-		game_config::path = get_cwd() + '/' + game_config::path;
-		font_manager_.update_font_path();
-	}
-	if (!game_config::path.empty()) {
-		heros_.set_path(game_config::path);
-		cards_.set_path(game_config::path);
-	}
-
-	for (arg_ = 1; arg_ != argc_; ++arg_) {
-		const std::string val(argv_[arg_]);
-		if (val.empty()) {
-			continue;
-		}
-
-		if (val == "--config-dir") {
-			if (argc_ <= ++arg_)
-				break;
-		} else if(val == "--nosound") {
-			no_sound = true;
-		} else if(val == "--nomusic") {
-			no_music = true;
-		} else if(val[0] == '-') {
-			std::cerr << "unknown option: " << val << std::endl;
-			throw config::error("unknown option");
-		} else {
-			std::cerr << "Overriding data directory with " << val << std::endl;
-#ifdef _WIN32
-			// use c_str to ensure that index 1 points to valid element since c_str() returns null-terminated string
-			if(val.c_str()[1] == ':') {
-#else
-			if(val[0] == '/') {
-#endif
-				game_config::path = val;
-			} else {
-				game_config::path = get_cwd() + '/' + val;
-			}
-			heros_.set_path(game_config::path);
-			cards_.set_path(game_config::path);
-
-			if(!is_directory(game_config::path)) {
-				std::cerr << "Could not find directory '" << game_config::path << "'\n";
-				throw config::error("directory not found");
-			}
-
-			font_manager_.update_font_path();
-		}
-	}
-
-#if defined(_WIN32)
-	// game_config::path is ansi format.
-	for (std::string::const_iterator it = game_config::path.begin(); it != game_config::path.end(); ++ it) {
-		if (*it & 0x80) {
-			std::stringstream err;
-			std::string path = game_config::path;
-			std::replace(path.begin(), path.end(), '/', '\\');
-
-			err << path << " include invalid character! Please use english path.";
-			MessageBox(NULL, err.str().c_str(), "Error", MB_OK);
-			throw game::error(err.str());
-		}
-	}
-#endif
-
-	std::replace(game_config::path.begin(), game_config::path.end(), '\\', '/');
-
-	std::cerr << '\n';
-	std::cerr << "Data directory: " << game_config::path
-		<< "\nUser configuration directory: " << get_user_config_dir()
-		<< "\nUser data directory: " << get_user_data_dir()
-		<< "\nCache directory: " << get_cache_dir()
-		<< '\n';
-
-#if defined(_WIN32) && defined(_DEBUG)
-	// sound::init_sound make no memory leak output.
-	// By this time, I doesn't find what result it, to easy, don't call sound::init_sound. 
-	no_sound = true;
-#endif
-
-	// disable sound in nosound mode, or when sound engine failed to initialize
-	if (no_sound || ((preferences::sound_on() || preferences::music_on() ||
-	                  preferences::turn_bell() || preferences::UI_sound_on()) &&
-	                 !sound::init_sound())) {
-		preferences::set_sound(false);
-		preferences::set_music(false);
-		preferences::set_turn_bell(false);
-		preferences::set_UI_sound(false);
-	} else if (no_music) { // else disable the music in nomusic mode
-		preferences::set_music(false);
-	}
-
-	game_config::reserve_players.insert("");
-	game_config::reserve_players.insert("kingdom");
-	game_config::reserve_players.insert("Player");
-	game_config::reserve_players.insert(_("Player"));
-
-	//
-	// initialize player group
-	//
-	upgrade::fill_require();
-	regenerate_heros(heros_);
+	cards_.set_path(game_config::path);
 }
 
-void regenerate_heros(hero_map& heros)
+void game_instance::regenerate_heros(hero_map& heros, bool allow_empty)
 {
-	const std::string hero_data_path = game_config::path + "/xwml/" + "hero.dat";
-	heros.map_from_file(hero_data_path);
-	if (!heros.map_from_file(hero_data_path)) {
-		std::stringstream err;
-		err << _("Can not find valid hero.dat in <data>/xwml");
-		throw game::error(err.str());
-	}
-	hero_map::map_size_from_dat = heros.size();
-	hero player_hero(hero_map::map_size_from_dat);
-	if (!preferences::get_hero(player_hero, heros.size())) {
-		// write [hero] to preferences
-		preferences::set_hero(heros, player_hero);
-	}
-
-	group.reset();
-	heros.add(player_hero);
-	hero& leader = heros[heros.size() - 1];
-	group.set_leader(leader);
-	leader.set_uid(preferences::uid());
-	group.set_noble(preferences::noble());
-	group.set_coin(preferences::coin());
-	group.set_score(preferences::score());
-	group.interior_from_str(preferences::interior());
-	group.signin_from_str(preferences::signin());
-	group.reload_heros_from_string(heros, preferences::member(), preferences::exile());
-	group.associate_from_str(preferences::associate());
+	base_instance::regenerate_heros(heros, false);
 	group.set_layout(preferences::layout());
-	group.set_map(preferences::map());
-
-	group.set_city(heros[hero::number_local_player_city]);
-	group.city().set_name(preferences::city());
-
-	other_group.clear();
 }
 
-display& game_controller::disp()
+bool game_instance::init_config(const bool force)
 {
-	if (disp_.get() == NULL) {
-		if(get_video_surface() == NULL) {
-			throw CVideo::error();
-		}
-		disp_.assign(display::create_dummy_display(video_));
-	}
-	return *disp_.get();
-}
-
-surface icon2;
-bool game_controller::init_video()
-{
-	std::pair<int,int> resolution;
-	int bpp = 0;
-	int video_flags = 0;
-
-#if (defined(__APPLE__) && TARGET_OS_IPHONE) || defined(ANDROID)
-    SDL_Rect rc = video_.bound();
-	resolution = std::make_pair(rc.w, rc.h);
-	bpp = 32;
-	// on iphone/ipad, don't set SDL_WINDOW_FULLSCREEN, it will result cannot find orientation.
-	// video_flags = SDL_WINDOW_FULLSCREEN;
-
-#else
-
-	bool found_matching = preferences::detect_video_settings(video_, resolution, bpp, video_flags);
-    
-
-	if (force_bpp_ > 0) {
-		bpp = force_bpp_;
-	}
-
-	if (!found_matching) {
-		std::cerr << "Video mode " << resolution.first << 'x'
-			<< resolution.second << 'x' << bpp
-			<< " is not supported.\n";
-
-		if ((video_flags & SDL_WINDOW_FULLSCREEN)) {
-			std::cerr << "Try running the program with the --windowed option "
-				<< "using a " << bpp << "bpp setting for your display adapter.\n";
-		} else {
-			std::cerr << "Try running the program with the --fullscreen option.\n";
-		}
-
-		return false;
-	}
-#endif
-
-    std::cerr << "setting mode to " << resolution.first << "x" << resolution.second << "x" << bpp << "\n";
-	const int res = video_.setMode(resolution.first, resolution.second, bpp, video_flags);
-	std::cerr << "using mode " << video_.getx() << "x" << video_.gety() << "x" << bpp << "\n";
-	video_.setBpp(bpp);
-
-	if (res == 0) {
-		std::cerr << "required video mode, " << resolution.first << "x"
-		          << resolution.second << "x" << bpp << " is not supported\n";
-		return false;
-	}
-
-	std::string wm_title_string = _("The War of Kingdom");
-	wm_title_string += " - " + game_config::version;
-	SDL_SetWindowTitle(video_.getWindow(), wm_title_string.c_str());
-
-#ifdef _WIN32
-	icon2 = image::get_image("game-icon.png", image::UNSCALED);
-	if (icon2) {
-		SDL_SetWindowIcon(video_.getWindow(), icon2);
-	}
-#endif
-
-	return true;
-}
-
-bool game_controller::init_config(const bool force)
-{
-	cache_.clear_defines();
-
-	load_game_cfg(force);
-
-	const config &cfg = game_config().child("game_config");
-	game_config::load_config(cfg ? &cfg : NULL);
-
-	paths_manager_.set_paths(game_config());
-	// ::init_textdomains(game_config());
-	about::set_about(game_config());
+	base_instance::init_config(force);
 	ai::configuration::init(game_config());
 
 	return true;
 }
 
-bool game_controller::init_language()
-{
-	if (!::load_language_list()) {
-		return false;
-	}
-
-	if (!::set_language(get_locale())) {
-		return false;
-	}
-
-	// hotkey::load_descriptions();
-
-	return true;
-}
-
-bool game_controller::play_screenshot_mode()
+bool game_instance::play_screenshot_mode()
 {
 	if(!screenshot_mode_) {
 		return true;
@@ -605,12 +306,12 @@ bool game_controller::play_screenshot_mode()
 	return false;
 }
 
-bool game_controller::is_loading() const
+bool game_instance::is_loading() const
 {
 	return !game::load_game_exception::game.empty();
 }
 
-bool game_controller::load_game()
+bool game_instance::load_game()
 {
 	savegame::loadgame load(disp(), heros(), game_config(), state_);
 
@@ -690,7 +391,7 @@ bool game_controller::load_game()
 	return true;
 }
 
-void game_controller::mark_completed_campaigns(std::vector<config> &campaigns)
+void game_instance::mark_completed_campaigns(std::vector<config> &campaigns)
 {
 	BOOST_FOREACH (config &campaign, campaigns) {
 		campaign["completed"] = preferences::is_campaign_completed(campaign["id"]);
@@ -724,7 +425,7 @@ void level_to_gamestate_bh(game_state& state, bool fog, bool shroud, config& sce
 	::level_to_gamestate(scenario, replay_data, state, state.classification().campaign_type);
 }
 
-void game_controller::level_to_gamestate(bool fog, bool shroud, const std::string& map_data, bool modify_placing)
+void game_instance::level_to_gamestate(bool fog, bool shroud, const std::string& map_data, bool modify_placing)
 {
 	std::stringstream strstr;
 	bool layout_mode = state_.classification().mode == "layout";
@@ -872,7 +573,7 @@ void game_controller::level_to_gamestate(bool fog, bool shroud, const std::strin
 // <0(-1): cancel
 // 0: next dialog is canceled
 // >0(1): start a new campaign
-int game_controller::new_campaign(int catalog)
+int game_instance::new_campaign(int catalog)
 {
 	const config::const_child_itors &ci = game_config().child_range("campaign");
 	std::vector<config> campaigns(ci.first, ci.second);
@@ -1102,7 +803,7 @@ void state_for_siege_bh(game_state& state, const config& campaign, config& scena
 	level_to_gamestate_bh(state, false, false, scenario, scenario["modify_placing"].to_bool());
 }
 
-void game_controller::start_siege_game(bool subcontinent)
+void game_instance::start_siege_game(bool subcontinent)
 {
 	if (!subcontinent) {
 		const config& campaign = state_for_siege_uh(state_, game_config_, false);
@@ -1124,7 +825,7 @@ void game_controller::start_siege_game(bool subcontinent)
 	launch_game(false);
 }
 
-void game_controller::start_scenario_game(bool subcontinent)
+void game_instance::start_scenario_game(bool subcontinent)
 {
 	if (!subcontinent) {
 /*
@@ -1138,7 +839,7 @@ void game_controller::start_scenario_game(bool subcontinent)
 	launch_game(false);
 }
 
-void game_controller::start_layout(const std::string& map_data)
+void game_instance::start_layout(const std::string& map_data)
 {
 	state_ = game_state();
 	state_.classification().campaign_type = "scenario";
@@ -1174,7 +875,7 @@ void game_controller::start_layout(const std::string& map_data)
 	launch_game(false);
 }
 
-void game_controller::reload_changed_game_config()
+void game_instance::reload_changed_game_config()
 {
 	//force a reload of configuration information
 	cache_.recheck_filetree_checksum();
@@ -1183,7 +884,7 @@ void game_controller::reload_changed_game_config()
 	init_config(true);
 }
 
-void game_controller::start_wesnothd()
+void game_instance::start_wesnothd()
 {
 	const std::string wesnothd_program =
 		preferences::get_mp_server_program_name().empty() ?
@@ -1214,7 +915,7 @@ void game_controller::start_wesnothd()
 	throw game::mp_server_error("Starting MP server failed!");
 }
 
-void game_controller::play_multiplayer(bool random_map)
+void game_instance::play_multiplayer(bool random_map)
 {
 	if (game_config::is_reserve_player(preferences::login())) {
 		utils::string_map symbols;
@@ -1366,19 +1067,7 @@ void game_controller::play_multiplayer(bool random_map)
 	return;
 }
 
-bool game_controller::change_language()
-{
-	gui2::tlanguage_selection dlg;
-	dlg.show(disp().video());
-	if (dlg.get_retval() != gui2::twindow::OK) return false;
-
-	std::string wm_title_string = _("The War of Kingdom");
-	wm_title_string += " - " + game_config::version;
-	SDL_SetWindowTitle(disp().video().getWindow(), wm_title_string.c_str());
-	return true;
-}
-
-void game_controller::inapp_purchase()
+void game_instance::inapp_purchase()
 {
 	bool browse = false;
 
@@ -1401,18 +1090,17 @@ void game_controller::inapp_purchase()
 	}
 }
 
-void game_controller::show_preferences()
+void game_instance::show_preferences()
 {
 	preferences::show_preferences_dialog(disp());
 }
 
-void game_controller::set_unit_data(config& gc)
+void game_instance::set_unit_data(config& gc)
 {
 	loadscreen::start_stage("load unit types");
 	unit_types.set_config(gc);
 }
 
-#define MAXLEN_BASENAME		16
 #define BASENAME_DATA		"data.bin"
 
 typedef enum {
@@ -1433,20 +1121,20 @@ ppmap_type_t decide_preprocmap_type(const preproc_map &ppmap)
 	return type;
 }
 
-void game_controller::load_campaign_cfg()
+void game_instance::load_campaign_cfg()
 {
 	game_config::scoped_preproc_define campaign_define(state_.classification().campaign_define, state_.classification().campaign_define.empty() == false);
 
 	try {
-		load_game_cfg();
+		load_game_cfg(false);
 	} catch(config::error&) {
 		cache_.clear_defines();
-		load_game_cfg();
+		load_game_cfg(false);
 		return;
 	}
 }
 
-void game_controller::load_game_cfg(const bool force)
+void game_instance::load_game_cfg(const bool force)
 {
 	// make sure that 'debug mode' symbol is set if command line parameter is selected
 	// also if we're in multiplayer and actual debug mode is disabled
@@ -1592,7 +1280,7 @@ void game_controller::load_game_cfg(const bool force)
 }
 
 
-void game_controller::launch_game(bool is_load_game)
+void game_instance::launch_game(bool is_load_game)
 {
 	loadscreen::global_loadscreen_manager loadscreen_manager(disp().video());
 	loadscreen::start_stage("load data");
@@ -1620,7 +1308,7 @@ void game_controller::launch_game(bool is_load_game)
 	}
 }
 
-void game_controller::play_replay()
+void game_instance::play_replay()
 {
 	const binary_paths_manager bin_paths_manager(game_config());
 
@@ -1635,7 +1323,7 @@ void game_controller::play_replay()
 	}
 }
 
-editor::EXIT_STATUS game_controller::start_editor(const std::string& map_data)
+editor::EXIT_STATUS game_instance::start_editor(const std::string& map_data)
 {
 	display_lock loc(disp());
 	hotkey::scope_changer changer(game_config(), "hotkey_editor");
@@ -1657,20 +1345,9 @@ editor::EXIT_STATUS game_controller::start_editor(const std::string& map_data)
 	return editor::EXIT_ERROR; // not supposed to happen
 }
 
-game_controller::~game_controller()
+game_instance::~game_instance()
 {
-	if (icon_) {
-		icon_.get()->refcount --;
-	}
-	if (game_config::savegame_cache) {
-		free(game_config::savegame_cache);
-		game_config::savegame_cache = NULL;
-	}
-	terrain_builder::release_heap();
 	pathfind::release_pq();
-	sound::close_sound();
-
-	posix_print("game_controller::~game_controller");
 }
 
 // this is needed to allow identical functionality with clean refactoring
@@ -1679,28 +1356,6 @@ game_controller::~game_controller()
 static void safe_exit(int res) 
 {
 	exit(res);
-}
-
-/**
- * I would prefer to setup locale first so that early error
- * messages can get localized, but we need the game_controller
- * initialized to have get_intl_dir() to work.  Note: setlocale()
- * does not take GUI language setting into account.
- */
-static void init_locale() 
-{
-	#ifdef _WIN32
-	    std::setlocale(LC_ALL, "English");
-	#else
-		std::setlocale(LC_ALL, "C");
-		std::setlocale(LC_MESSAGES, "");
-	#endif
-	const std::string& intl_dir = get_intl_dir();
-	bindtextdomain (PACKAGE, intl_dir.c_str());
-	bind_textdomain_codeset (PACKAGE, "UTF-8");
-	bindtextdomain (PACKAGE "-lib", intl_dir.c_str());
-	bind_textdomain_codeset (PACKAGE "-lib", "UTF-8");
-	textdomain (PACKAGE);
 }
 
 class about_text_formatter2
@@ -1758,24 +1413,22 @@ static int do_gameloop(int argc, char** argv)
 {
 	srand((unsigned int)time(NULL));
 
-	// there is parameter bug in install program, make cannot set userdata dir
+	// setup userdata directory
 #if defined(__APPLE__) || defined(ANDROID)
 	set_preferences_dir("Documents");
 #else
 	set_preferences_dir("kingdom");
 #endif
 
-	const std::string program = argv[0];
-	game_config::wesnoth_program_dir = directory_name(program);
+	// modify some game_config variable
+	game_config::wesnoth_program_dir = directory_name(argv[0]);
 
 	//ensure recorder has an actually random seed instead of what it got during
 	//static initialization (befire any srand() call)
 	recorder.set_seed(rand());
 
-	game_controller game(argc,argv);
-	const int start_ticks = SDL_GetTicks();
-
-	init_locale();
+	game_instance game(argc,argv);
+	tinstance_manager instance_manager(game);
 
 	// always connect to lobby server.
 	tlobby_manager lobby_manager;
@@ -1821,7 +1474,7 @@ static int do_gameloop(int argc, char** argv)
 	const gui2::event::tmanager gui_event_manager;
 
 	loadscreen::start_stage("load config");
-	res = game.init_config();
+	res = game.init_config(false);
 	if (res == false) {
 		std::cerr << "could not initialize game config\n";
 		return 1;
@@ -1884,7 +1537,7 @@ static int do_gameloop(int argc, char** argv)
 			if (res == gui2::ttitle_screen::NOTHING) {
 				// load/reload hero_map from file
 				if (game.session_xmited()) {
-					regenerate_heros(game.heros());
+					game.regenerate_heros(game.heros(), false);
 				} else {
 					http::membership m = http::session(game.disp(), game.heros());
 					if (m.uid >= 0) {
@@ -2087,6 +1740,8 @@ int main(int argc, char** argv)
 		return 1;
 	}
 
+	// game_config::app = "";
+	game_config::app_msgid = "War of Kingdom";
 	game_config::app_channel = "#war-of-kingdom";
 	if (SDL_Init(SDL_INIT_TIMER) < 0) {
 		fprintf(stderr, "Couldn't initialize SDL: %s\n", SDL_GetError());

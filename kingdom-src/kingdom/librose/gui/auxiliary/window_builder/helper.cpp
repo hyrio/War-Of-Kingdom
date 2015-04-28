@@ -113,21 +113,6 @@ unsigned read_flags(const config& cfg)
 tscrollbar_container::tscrollbar_mode
 		get_scrollbar_mode(const std::string& scrollbar_mode)
 {
-/*
-	if(scrollbar_mode == "always") {
-		return tscrollbar_container::always_visible;
-	} else if(scrollbar_mode == "never") {
-		return tscrollbar_container::always_invisible;
-	} else if(scrollbar_mode == "auto") {
-		return tscrollbar_container::auto_visible;
-	} else {
-		if(!scrollbar_mode.empty() && scrollbar_mode != "initial_auto") {
-			ERR_GUI_E << "Invalid scrollbar mode '"
-					<< scrollbar_mode << "' falling back to 'initial_auto'.\n";
-		}
-		return tscrollbar_container::auto_visible_first_run;
-	}
-*/
 	if (scrollbar_mode == "never") {
 		return tscrollbar_container::always_invisible;
 	} else {

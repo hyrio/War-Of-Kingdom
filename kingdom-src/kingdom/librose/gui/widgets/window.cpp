@@ -20,8 +20,7 @@
 
 #define GETTEXT_DOMAIN "wesnoth-lib"
 
-#include "gui/widgets/window_private.hpp"
-
+#include "gui/widgets/window.hpp"
 #include "font.hpp"
 #include "display.hpp"
 #include "gettext.hpp"
@@ -29,7 +28,6 @@
 #include "gui/auxiliary/event/distributor.hpp"
 #include "gui/auxiliary/event/message.hpp"
 #include "gui/auxiliary/log.hpp"
-#include "gui/auxiliary/layout_exception.hpp"
 #include "gui/auxiliary/window_builder/control.hpp"
 #include "gui/dialogs/tip.hpp"
 #include "gui/widgets/button.hpp"
@@ -937,21 +935,6 @@ void twindow::layout()
 		keep_rect_ = ::create_rect(0, 0, maximum_width, maximum_height);
 	}
 
-	/***** Handle click dismiss status. *****/
-	tbutton* click_dismiss_button = NULL;
-	if ((click_dismiss_button = find_widget<tbutton>(this, "click_dismiss", false, false))) {
-		click_dismiss_button->set_visible(twidget::INVISIBLE);
-	}
-	if (click_dismiss_) {
-		tbutton* button = find_widget<tbutton>(this, "ok", false, false);
-		if (button) {
-			button->set_visible(twidget::INVISIBLE);
-			click_dismiss_button = button;
-		}
-		VALIDATE(click_dismiss_button
-				, _("Click dismiss needs a 'click_dismiss' or 'ok' button."));
-	}
-
 	/***** Layout. *****/
 	layout_init(true);
 	generate_dot_file("layout_init", LAYOUT);
@@ -974,48 +957,8 @@ void twindow::layout()
 				<< settings::screen_width << ',' << settings::screen_height
 				<< '.';
 
-		throw twml_exception(_("Failed to show a dialog, "
+		throw twml_exception(tintegrate::generate_format(id(), "yellow") + _("Failed to show a dialog, "
 				"which doesn't fit on the screen."), sstr.str());
-	}
-
-	/****** Validate click dismiss status. *****/
-	if (click_dismiss_ && disable_click_dismiss()) {
-		assert(click_dismiss_button);
-		click_dismiss_button->set_visible(twidget::VISIBLE);
-
-		connect_signal_mouse_left_click(
-				  *click_dismiss_button
-				, boost::bind(
-					  &twindow::set_retval
-					, this
-					, OK
-					, true));
-
-		layout_init(true);
-		generate_dot_file("layout_init", LAYOUT);
-
-		layout_linked_widgets(NULL);
-
-		try {
-			twindow_implementation::layout(*this, maximum_width, maximum_height);
-
-		} catch(tlayout_exception_resize_failed&) {
-
-			/** @todo implement the scrollbars on the window. */
-
-			std::stringstream sstr;
-			sstr << __FILE__ << ":" << __LINE__ << " in function '" << __func__
-				<< "' found the following problem: Failed to size window;"
-				<< " wanted size " << get_best_size()
-				<< " available size "
-				<< maximum_width << ',' << maximum_height
-				<< " screen size "
-				<< settings::screen_width << ',' << settings::screen_height
-				<< '.';
-
-			throw twml_exception(_("Failed to show a dialog, "
-						"which doesn't fit on the screen."), sstr.str());
-		}
 	}
 
 	tpoint origin(0, 0);
@@ -1244,91 +1187,6 @@ void twindow::generate_dot_file(const std::string& generator,
 	debug_layout_->generate_dot_file(generator, domain);
 }
 #endif
-
-void twindow_implementation::layout(twindow& window,
-		const unsigned maximum_width, const unsigned maximum_height)
-{
-	log_scope2(log_gui_layout, LOG_IMPL_SCOPE_HEADER);
-
-	/*
-	 * For now we return the status, need to test later whether this can
-	 * entirely be converted to an exception based system as in 'promised' on
-	 * the algorithm page.
-	 */
-
-	try {
-		tpoint size = window.get_best_size();
-
-		std::stringstream err;
-		if (size.x > static_cast<int>(maximum_width)) {
-			err << " Result: Width failed. Wanted width " << maximum_width << " resulting width " << size.x << ".";
-			VALIDATE(false, err.str());
-		}
-		if (size.y > static_cast<int>(maximum_height)) {
-			err << " Result: Height failed. Wanted height " << maximum_height << " resulting height " << size.y << ".";
-			VALIDATE(false, err.str());
-		}
-
-/*
-		DBG_GUI_L << LOG_IMPL_HEADER
-				<< " best size : " << size
-				<< " maximum size : " << maximum_width << ',' << maximum_height
-				<< ".\n";
-		if(size.x <= static_cast<int>(maximum_width)
-				&& size.y <= static_cast<int>(maximum_height)) {
-
-			DBG_GUI_L << LOG_IMPL_HEADER << " Result: Fits, nothing to do.\n";
-			return;
-		}
-
-		if(size.x > static_cast<int>(maximum_width)) {
-			window.reduce_width(maximum_width);
-
-			size = window.get_best_size();
-			if(size.x > static_cast<int>(maximum_width)) {
-				DBG_GUI_L << LOG_IMPL_HEADER
-						<< " Result: Resize width failed."
-						<< " Wanted width " << maximum_width
-						<< " resulting width " << size.x
-						<< ".\n";
-				throw tlayout_exception_width_resize_failed();
-			}
-			DBG_GUI_L << LOG_IMPL_HEADER
-					<< " Status: Resize width succeeded.\n";
-		}
-
-		if(size.y > static_cast<int>(maximum_height)) {
-			window.reduce_height(maximum_height);
-
-			size = window.get_best_size();
-			if(size.y > static_cast<int>(maximum_height)) {
-				DBG_GUI_L << LOG_IMPL_HEADER << " Result: Resize height failed."
-					<< " Wanted height " << maximum_height
-					<< " resulting height " << size.y
-					<< ".\n";
-				throw tlayout_exception_height_resize_failed();
-			}
-			DBG_GUI_L << LOG_IMPL_HEADER
-					<< " Status: Resize height succeeded.\n";
-		}
-
-		assert(size.x <= static_cast<int>(maximum_width)
-				&& size.y <= static_cast<int>(maximum_height));
-
-
-		DBG_GUI_L << LOG_IMPL_HEADER << " Result: Resizing succeeded.\n";
-		return;
-*/
-	} catch (tlayout_exception_width_modified&) {
-		DBG_GUI_L << LOG_IMPL_HEADER
-				<< " Status: Width has been modified, rerun.\n";
-
-		window.layout_init(false);
-		window.layout_linked_widgets(NULL);
-		layout(window, maximum_width, maximum_height);
-		return;
-	}
-}
 
 void twindow::radio_page_swap_uh(const tradio_page::tpage& page, twidget* holder, bool first)
 {

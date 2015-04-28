@@ -246,6 +246,8 @@ extern const config* game_cfg;
 extern gamemap* map;
 extern bool editor;
 
+extern section* book_toplevel;
+
 std::string escape(const std::string &s);
 std::string hidden_symbol(bool hidden = true);
 void fill_reserve_sections();
@@ -263,7 +265,6 @@ section* find_section(section &sec, const std::string &id);
 topic* find_topic(section &sec, const std::string &id);
 std::pair<section*, int> find_parent(section& sec, const std::string& id);
 
-bool find_topic2(const std::string& dst);
 std::vector<topic> generate_topics(const bool sort_generated, const std::string &generator);
 void generate_sections(const config *help_cfg, const std::string &generator, section &sec, int level);
 

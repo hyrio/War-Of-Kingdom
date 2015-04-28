@@ -68,7 +68,7 @@ bool is_locked(const TCPsocket sock);
 bool close_socket(TCPsocket sock);
 TCPsocket detect_error();
 
-std::pair<network::statistics,network::statistics> get_current_transfer_stats(TCPsocket sock);
+std::pair<network::statistics, network::statistics> get_current_transfer_stats(TCPsocket sock);
 }
 
 #endif

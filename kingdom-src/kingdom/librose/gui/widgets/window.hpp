@@ -55,7 +55,6 @@ class twindow
 {
 	friend class tdebug_layout_graph;
 	friend twindow *build(CVideo &, const twindow_builder::tresolution *);
-	friend struct twindow_implementation;
 	friend class tinvalidate_layout_blocker;
 	friend class tpane;
 

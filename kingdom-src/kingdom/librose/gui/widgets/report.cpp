@@ -27,7 +27,6 @@
 #include "gui/widgets/scrollbar.hpp"
 #include "gui/widgets/spacer.hpp"
 #include "gui/widgets/window.hpp"
-#include "gui/auxiliary/layout_exception.hpp"
 #include "gui/dialogs/dialog.hpp"
 
 #include <boost/bind.hpp>

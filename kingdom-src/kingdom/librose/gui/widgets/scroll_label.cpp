@@ -25,7 +25,6 @@
 #include "gui/widgets/scrollbar.hpp"
 #include "gui/widgets/spacer.hpp"
 #include "gui/widgets/window.hpp"
-#include "gui/auxiliary/layout_exception.hpp"
 
 #include <boost/bind.hpp>
 
@@ -92,9 +91,12 @@ tpoint tscroll_label::calculate_best_size() const
 	unsigned w = best_width_(window->variables());
 
 	unsigned maximum_width = settings::screen_width;
-	if (w > settings::screen_width) {
+	if (w) {
 		const tpoint vertical_scrollbar = scrollbar_size(*vertical_scrollbar_grid_, vertical_scrollbar_mode_);
-		maximum_width = w - settings::screen_width - vertical_scrollbar.x;
+		maximum_width = w - vertical_scrollbar.x;
+		if (maximum_width > settings::screen_width) {
+			maximum_width -= settings::screen_width;
+		}
 	}
 
 	tlabel* label = dynamic_cast<tlabel*>(content_grid_->find("_label", false));

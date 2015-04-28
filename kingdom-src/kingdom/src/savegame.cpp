@@ -221,6 +221,7 @@ void manager::read_save_file(const std::string& name, config* summary_cfg, confi
 			posix_fread(fp, data, summary_size, bytertd);
 			data[summary_size] = '\0';
 			read(*summary_cfg, std::string((char*)data));
+
 		} else {
 			posix_fseek(fp, should_least_size, 0);
 		}
@@ -244,6 +245,7 @@ void manager::read_save_file(const std::string& name, config* summary_cfg, confi
 			data[start_scenario_size] = '\0';
 			config& replay_start_cfg = cfg->add_child("replay_start");
 			read(replay_start_cfg, std::string((char*)data));
+
 		} else {
 			posix_fseek(fp, should_least_size, 0);
 		}

@@ -19,7 +19,6 @@
 
 #include "gui/widgets/listbox.hpp"
 
-#include "gui/auxiliary/layout_exception.hpp"
 #include "gui/auxiliary/log.hpp"
 #include "gui/auxiliary/widget_definition/listbox.hpp"
 #include "gui/auxiliary/window_builder/listbox.hpp"

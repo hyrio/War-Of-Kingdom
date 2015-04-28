@@ -177,26 +177,6 @@ struct thorizontal_list
 	void create_item(const unsigned index);
 
 	/**
-	 * Tries to reduce the width for the generator.
-	 *
-	 * @see @ref layout_algorihm for more information.
-	 *
-	 * @param maximum_width       The wanted maximum width.
-	 */
-	void request_reduce_width(const unsigned /*maximum_width*/) {}
-
-	/**
-	 * Tries to reduce the height for the generator.
-	 *
-	 * @see @ref layout_algorihm for more information.
-	 *
-	 * @param maximum_height      The wanted maximum height.
-	 */
-	virtual void request_reduce_height(const unsigned /*maximum_height*/)
-	{
-	}
-
-	/**
 	 * Calculates the best size for the generator.
 	 *
 	 * @return                    The best size,
@@ -272,14 +252,6 @@ struct tvertical_list
 	/** See thorizontal_list::create_item(). */
 	void create_item(const unsigned index);
 
-	/** See thorizontal_list::request_reduce_width. */
-	void request_reduce_width(const unsigned /*maximum_width*/) {}
-
-	/** See thorizontal_list::request_reduce_height. */
-	virtual void request_reduce_height(const unsigned /*maximum_height*/)
-	{
-	}
-
 	/** See thorizontal_list::calculate_best_size(). */
 	tpoint calculate_best_size() const;
 
@@ -345,14 +317,6 @@ struct tmatrix
 	/** See thorizontal_list::create_item(). */
 	void create_item(const unsigned /*index*/) { ERROR_LOG(false); }
 
-	/** See thorizontal_list::request_reduce_width. */
-	void request_reduce_width(const unsigned /*maximum_width*/) {}
-
-	/** See thorizontal_list::request_reduce_height. */
-	virtual void request_reduce_height(const unsigned /*maximum_height*/)
-	{
-	}
-
 	/** See thorizontal_list::calculate_best_size(). */
 	tpoint calculate_best_size() const
 		{ ERROR_LOG(false); }
@@ -410,12 +374,6 @@ struct tindependent
 	{
 		/* DO NOTHING */
 	}
-
-	/** See thorizontal_list::request_reduce_width. */
-	void request_reduce_width(const unsigned maximum_width);
-
-	/** See thorizontal_list::request_reduce_height. */
-	virtual void request_reduce_height(const unsigned maximum_height);
 
 	/** See thorizontal_list::calculate_best_size(). */
 	tpoint calculate_best_size() const;
@@ -804,18 +762,6 @@ public:
 				item->grid.layout_init(full_initialization);
 			}
 		}
-	}
-
-	/** Inherited from tgenerator_. */
-	void request_reduce_width(const unsigned maximum_width)
-	{
-		placement::request_reduce_width(maximum_width);
-	}
-
-	/** Inherited from tgenerator_. */
-	void request_reduce_height(const unsigned maximum_height)
-	{
-		placement::request_reduce_height(maximum_height);
 	}
 
 	/** Inherited from tgenerator_. */

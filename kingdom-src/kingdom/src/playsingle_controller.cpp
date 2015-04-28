@@ -226,7 +226,7 @@ void playsingle_controller::demolish()
 
 void playsingle_controller::chat()
 {
-	gui2::tchat2 dlg(*gui_, human_team_group());
+	gui2::tchat2 dlg(*gui_);
 	dlg.show(gui_->video());
 
 	if (lobby->chat.ready()) {

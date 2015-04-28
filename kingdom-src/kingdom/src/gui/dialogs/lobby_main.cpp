@@ -49,6 +49,7 @@
 #include "preferences_display.hpp"
 #include "sound.hpp"
 #include "multiplayer.hpp"
+#include "base_instance.hpp"
 
 #include <time.h>
 #include <boost/foreach.hpp>
@@ -71,8 +72,6 @@ static lg::log_domain log_lobby("lobby");
 #define LOG_LB LOG_STREAM(info, log_lobby)
 #define ERR_LB LOG_STREAM(err, log_lobby)
 #define SCOPE_LB log_scope2(log_lobby, __func__)
-
-extern void regenerate_heros(hero_map& heros);
 
 namespace gui2 {
 
@@ -108,7 +107,7 @@ void tlobby_main::do_notify(t_notify_mode mode)
 }
 
 tlobby_main::tlobby_main(const config& game_config, lobby_info& info, display& disp, hero_map& heros, hero_map& heros_start)
-	: tchat_(disp, group, MIN_PAGE, CHAT_PAGE, CHATING_PAGE)
+	: tchat_(disp, MIN_PAGE, CHAT_PAGE, CHATING_PAGE)
 	, legacy_result_(QUIT)
 	, game_config_(game_config)
 	, gamelistbox_(NULL)
@@ -490,7 +489,7 @@ void tlobby_main::pre_show(CVideo& /*video*/, twindow& window)
 
 	// further window(cancel mp_create_side etc) will back to it.
 	// it is necessary to validate group.
-	regenerate_heros(heros_);
+	instance->regenerate_heros(heros_, false);
 	heros_start_ = heros_;
 
 	sheet_.insert(std::make_pair((int)LOBBY_PAGE, find_widget<ttoggle_button>(&window, "lobby", false, true)));

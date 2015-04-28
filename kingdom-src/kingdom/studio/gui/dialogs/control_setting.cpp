@@ -141,10 +141,6 @@ void init_layout_mode()
 	}
 
 	if (horizontal_mode.empty()) {
-		horizontal_mode.insert(std::make_pair(tscrollbar_container::auto_visible_first_run,
-			tscroll_mode(tscrollbar_container::auto_visible_first_run, "Auto visible first run")));
-		horizontal_mode.insert(std::make_pair(tscrollbar_container::always_visible, 
-			tscroll_mode(tscrollbar_container::always_visible, "Always visible")));
 		horizontal_mode.insert(std::make_pair(tscrollbar_container::always_invisible, 
 			tscroll_mode(tscrollbar_container::always_invisible, "Always invisible")));
 		horizontal_mode.insert(std::make_pair(tscrollbar_container::auto_visible, 
@@ -152,10 +148,6 @@ void init_layout_mode()
 	}
 
 	if (vertical_mode.empty()) {
-		vertical_mode.insert(std::make_pair(tscrollbar_container::auto_visible_first_run,
-			tscroll_mode(tscrollbar_container::auto_visible_first_run, "Auto visible first run")));
-		vertical_mode.insert(std::make_pair(tscrollbar_container::always_visible, 
-			tscroll_mode(tscrollbar_container::always_visible, "Always visible")));
 		vertical_mode.insert(std::make_pair(tscrollbar_container::always_invisible, 
 			tscroll_mode(tscrollbar_container::always_invisible, "Always invisible")));
 		vertical_mode.insert(std::make_pair(tscrollbar_container::auto_visible, 

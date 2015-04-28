@@ -201,6 +201,7 @@ public:
 	}
 
 	surface refresh_surface_report(int num, const reports::report& r, gui2::twidget& widget);
+	void shrouded_and_fogged(const map_location& loc, bool& shrouded, bool& fogged) const;
 
 protected:
 	/**

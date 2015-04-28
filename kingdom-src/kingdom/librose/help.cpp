@@ -315,6 +315,7 @@ section hidden_sections;
 const config* game_cfg = NULL;
 gamemap* map = NULL;
 bool editor = false;
+section* book_toplevel = NULL;
 
 void init_book(const config* _game_cfg, gamemap* _map, bool _editor)
 {

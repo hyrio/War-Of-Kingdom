@@ -131,10 +131,6 @@ void tmatrix::child_populate_dirty_list(twindow& caller,
 	content_.populate_dirty_list(caller, child_call_stack);
 }
 
-void tmatrix::request_reduce_width(const unsigned /*maximum_width*/)
-{
-}
-
 twidget* tmatrix::find_at(const tpoint& coordinate, const bool must_be_active)
 {
 	return content_.find_at(coordinate, must_be_active);

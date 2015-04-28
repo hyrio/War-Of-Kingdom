@@ -245,10 +245,6 @@ void tpane::filter(const tfilter_functor& filter_functor)
 	set_origin_children();
 }
 
-void tpane::request_reduce_width(const unsigned /*maximum_width*/)
-{
-}
-
 twidget* tpane::find_at(
 		  const tpoint& coordinate
 		, const bool must_be_active)

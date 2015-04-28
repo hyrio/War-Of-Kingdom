@@ -16,6 +16,8 @@
 #include "builder.hpp"
 #include "rectangle.hpp"
 #include "wml_exception.hpp"
+#include "display.hpp"
+#include "gui/widgets/window.hpp"
 
 #include "stdafx.h"
 #include <windowsx.h>
@@ -1394,6 +1396,22 @@ BOOL make_run_once(void)
 		return TRUE;	
 	}
 	return FALSE;
+}
+
+/*
+ * rose require callback
+ */
+void set_zoom_to_default(int zoom)
+{
+	display::default_zoom_ = zoom;
+	image::set_zoom(display::default_zoom_);
+}
+
+namespace gui2 {
+int app_show_preferences_dialog(display& disp, bool first)
+{
+	return twindow::OK;
+}
 }
 
 void handle_app_event(Uint32 type)

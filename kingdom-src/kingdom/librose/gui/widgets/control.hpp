@@ -167,9 +167,6 @@ public:
 	 * use_tooltip_on_label_overflow_. */
 	void layout_init(const bool full_initialization);
 
-	/** Inherited from twidget. */
-	void request_reduce_width(const unsigned maximum_width);
-
 	void refresh_locator_anim(std::vector<tintegrate::tlocator>& locator);
 
 	virtual void set_surface(const surface& surf, int w, int h);

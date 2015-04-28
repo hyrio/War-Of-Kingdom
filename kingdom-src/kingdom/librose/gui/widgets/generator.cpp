@@ -496,24 +496,6 @@ void tvertical_list::handle_key_down_arrow(SDLMod /*modifier*/, bool& handled)
 	}
 }
 
-void tindependent::request_reduce_width(const unsigned maximum_width)
-{
-	for(size_t i = 0; i < get_item_count(); ++i) {
-
-		tgrid& grid = item(i);
-		grid.request_reduce_width(maximum_width);
-	}
-}
-
-void tindependent::request_reduce_height(const unsigned maximum_height)
-{
-	for(size_t i = 0; i < get_item_count(); ++i) {
-
-		tgrid& grid = item(i);
-		grid.request_reduce_height(maximum_height);
-	}
-}
-
 tpoint tindependent::calculate_best_size() const
 {
 	/*

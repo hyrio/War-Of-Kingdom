@@ -19,6 +19,7 @@
 
 #include "base_unit.hpp"
 #include "map_location.hpp"
+#include "terrain_translation.hpp"
 
 #include <cassert>
 
@@ -252,6 +253,9 @@ public:
 	base_unit* find_base_unit(int i) const { return map_[i]; }
 
 	void verify_map_index() const;
+
+	virtual bool terrain_matches(const map_location& loc, const t_translation::t_match& terrain_types_match) const { return false; }
+	virtual void build_terrains(std::map<t_translation::t_terrain, std::vector<map_location> >& terrain_by_type) {}
 
 private:
 	void expand_coor_map(int w);

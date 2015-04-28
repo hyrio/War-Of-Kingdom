@@ -189,36 +189,6 @@ public:
 	/** Inherited from twidget. */
 	void layout_init(const bool full_initialization);
 
-	/**
-	 * Tries to reduce the width of a container.
-	 *
-	 * @see @ref layout_algorithm for more information.
-	 *
-	 * @param maximum_width       The wanted maximum width.
-	 */
-	void reduce_width(const unsigned maximum_width);
-
-	/** Inherited from twidget. */
-	void request_reduce_width(const unsigned maximum_width);
-
-	/** Inherited from twidget. */
-	void demand_reduce_width(const unsigned maximum_width);
-
-	/**
-	 * Tries to reduce the height of a container.
-	 *
-	 * @see @ref layout_algorithm for more information.
-	 *
-	 * @param maximum_height      The wanted maximum height.
-	 */
-	void reduce_height(const unsigned maximum_height);
-
-	/** Inherited from twidget. */
-	void request_reduce_height(const unsigned maximum_height);
-
-	/** Inherited from twidget. */
-	void demand_reduce_height(const unsigned maximum_height);
-
 	/** Inherited from twidget. */
 	tpoint calculate_best_size() const;
 

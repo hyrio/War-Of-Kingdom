@@ -3908,14 +3908,6 @@ void team::set_all_city_deputed(game_display& disp, bool set) const
 	}
 }
 
-void shrouded_and_fogged(const map_location& loc, const void* t, bool& shrouded, bool& fogged)
-{
-	const team* tm = reinterpret_cast<const team*>(t);
-	shrouded = tm->shrouded(loc);
-	// shrouded hex are not considered fogged (no need to fog a black image)
-	fogged = !shrouded && tm->fogged(loc);
-}
-
 namespace player_teams {
 int village_owner(const map_location& loc)
 {

@@ -179,19 +179,7 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
-				RelativePath="..\..\librose\app\anim_display.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\librose\app\callback.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\librose\app\hero.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\librose\app\main.cpp"
+				RelativePath="..\..\studio\main.cpp"
 				>
 			</File>
 			<File

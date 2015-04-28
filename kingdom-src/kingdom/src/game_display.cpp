@@ -523,6 +523,8 @@ game_display::game_display(unit_map& units, hero_map& heros, play_controller* co
 	// singleton_ = this;
 	
 	if (controller) {
+		builder_->set_units(&units);
+
 		SDL_Rect screen = screen_area();
 		std::string patch = get_theme_patch();
 		theme_current_cfg_ = theme::set_resolution(theme_cfg, screen, patch, theme_cfg_);
@@ -1142,6 +1144,16 @@ surface game_display::refresh_surface_report(int num, const reports::report& r, 
 	return surf;
 }
 
+void game_display::shrouded_and_fogged(const map_location& loc, bool& shrouded, bool& fogged) const
+{
+	if (!viewpoint_) {
+		return;
+	}
+	shrouded = viewpoint_->shrouded(loc);
+	// shrouded hex are not considered fogged (no need to fog a black image)
+	fogged = !shrouded && viewpoint_->fogged(loc);
+}
+
 image::TYPE game_display::get_image_type(const map_location& loc) {
 	// We highlight hex under the mouse, or under a selected unit.
 	if (get_map().on_board(loc)) {
@@ -1703,7 +1715,7 @@ void game_display::draw_sidebar()
 
 surface game_display::minimap_surface(int w, int h)
 {
-	return image::getMinimap(w, h, get_map(), viewpoint_);
+	return image::getMinimap(w, h, get_map(), this);
 }
 
 void game_display::draw_minimap_units(surface& screen)

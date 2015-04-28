@@ -120,36 +120,6 @@ void tcontainer_::layout_init(const bool full_initialization)
 	grid_.layout_init(full_initialization);
 }
 
-void tcontainer_::reduce_width(const unsigned maximum_width)
-{
-	grid_.reduce_width(maximum_width - border_space().x);
-}
-
-void tcontainer_::request_reduce_width(const unsigned maximum_width)
-{
-	grid_.request_reduce_width(maximum_width - border_space().x);
-}
-
-void tcontainer_::demand_reduce_width(const unsigned maximum_width)
-{
-	grid_.demand_reduce_width(maximum_width - border_space().x);
-}
-
-void tcontainer_::reduce_height(const unsigned maximum_height)
-{
-	grid_.reduce_height(maximum_height - border_space().y);
-}
-
-void tcontainer_::request_reduce_height(const unsigned maximum_height)
-{
-	grid_.request_reduce_height(maximum_height - border_space().y);
-}
-
-void tcontainer_::demand_reduce_height(const unsigned maximum_height)
-{
-	grid_.demand_reduce_height(maximum_height - border_space().y);
-}
-
 void tcontainer_::place(const tpoint& origin, const tpoint& size)
 {
 	tcontrol::place(origin, size);

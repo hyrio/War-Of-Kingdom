@@ -162,6 +162,7 @@ void tmp_side_wait::join_game(twindow& window, bool observe)
 	while (!level_.has_attribute("version") || !level_.child("side")) {
 		level_.clear();
 
+		// below function has BUG!!!
 		network::connection data_res = dialogs::network_receive_dialog(disp_, _("Getting game data..."), level_);
 		if (!data_res) {
 			legacy_result_ = QUIT;

@@ -38,13 +38,12 @@
 #include "wml_separators.hpp"
 #include "serialization/parser.hpp"
 #include "actions.hpp"
+#include "base_instance.hpp"
 
 #include <boost/foreach.hpp>
 #include <boost/bind.hpp>
 #include <boost/iostreams/filtering_streambuf.hpp>
 #include <boost/iostreams/filter/gzip.hpp>
-
-extern void regenerate_heros(hero_map& heros);
 
 namespace gui2 {
 
@@ -563,7 +562,7 @@ void tmp_side_creator::load_game(twindow& window)
 			team_names = generate_team_names_from_side_mem(game_config::savegame_cache);
 		}
 		catch (load_game_cancelled_exception){
-			regenerate_heros(heros_);
+			instance->regenerate_heros(heros_, false);
 			heros_start_ = heros_;
 
 			legacy_result_ = CREATE;

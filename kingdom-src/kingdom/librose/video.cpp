@@ -17,6 +17,7 @@
  *  @file
  *  Video-testprogram, standalone
  */
+#define GETTEXT_DOMAIN "wesnoth-lib"
 
 #include "global.hpp"
 
@@ -28,6 +29,7 @@
 #include "sdl_utils.hpp"
 #include "video.hpp"
 #include "display.hpp"
+#include "gettext.hpp"
 
 #include <boost/foreach.hpp>
 #include <vector>
@@ -188,7 +190,7 @@ int CVideo::setMode(int x, int y, int bits_per_pixel, int flags)
 		SDL_DestroyRenderer(renderer);
 	}
 	
-	window = SDL_CreateWindow("War of Kingdom",
+	window = SDL_CreateWindow(_(game_config::app_msgid.c_str()),
                           SDL_WINDOWPOS_UNDEFINED,
                           SDL_WINDOWPOS_UNDEFINED,
                           x, y,

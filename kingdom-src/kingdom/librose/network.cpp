@@ -76,6 +76,7 @@ static TCPsocket get_socket(network::connection handle)
 static void check_error()
 {
 	const TCPsocket sock = network_worker_pool::detect_error();
+
 	if (sock) {
 		const tsock& info = lobby->get_connection_details2(sock);
 		if (info.valid()) {
@@ -804,7 +805,7 @@ connection receive_data(config& cfg, connection connection_num, bandwidth_in_ptr
 
 connection receive_data(std::vector<char>& buf, connection connection_num, bandwidth_in_ptr* bandwidth_in)
 {
-	if(!socket_set) {
+	if (!socket_set) {
 		return 0;
 	}
 

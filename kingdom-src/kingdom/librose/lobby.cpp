@@ -306,8 +306,9 @@ void tsock::reset_connect()
 	network::disconnect(conn_);
 	state_ = s_none;
 	conn_ = network::null_connection;
+	// sock2_ = NULL;
 
-	lobby->broadcast_handle_raw(at_, t_disconnected, NULL);
+	lobby->broadcast_handle_status(at_, t_disconnected);
 }
 
 bool tsock::check_time_overflow(Uint32 threshold)
@@ -1050,6 +1051,7 @@ tlobby::tchat_sock::tchat_sock()
 	, last_task_time_(0)
 	, online_offline_received_(false)
 {
+	tag_ = _("Chat");
 	task_threshold_ = noresponse_threshold_;
 	msg_send_gap = 200;
 
@@ -1155,8 +1157,6 @@ void tlobby::tchat_sock::process()
 
 		nick_ = lobby->nick_;
 		if (!serv_) {
-			tag_ = _("Chat");
-
 			serv_ = irc::server_new(generate_ircnet());
 			serv_->sock = this;
 			strcpy(serv_->servername, host_.c_str());
@@ -1618,7 +1618,7 @@ void tlobby::tchat_sock::handle_command(const char* param[])
 			me->me = true;
 
 			state_ = s_ready;
-			lobby->broadcast_handle_raw(at_, t_connected, param);
+			lobby->broadcast_handle_status(at_, t_connected);
 			return;
 		}
 
@@ -1988,6 +1988,54 @@ void tlobby::tchat_sock::process_quit_bh(const std::string& nick)
 
 void tlobby::thttp_sock::process()
 {
+	const char* data = NULL;
+	int len = 0;
+	std::vector<char> buf;
+
+	if (state_ == s_none) {
+		if (tag_.empty()) {
+			tag_ = _("HTTP");
+		}
+
+		connected_at_ = 0;
+		conn_ = network::null_connection;
+
+		VALIDATE(conn_ == network::null_connection, "s_none, must be null_connection");
+		threading::waiter waiter;
+		network::connect(*this, host_, port_, waiter);
+		
+		state_ = s_create;
+
+	} else if (state_ == s_create) {
+		// create sock thread must be successfully. it is different from create sock successfully.
+		// connected_at_ != 0 mean thread successfully.
+		// conn_ != network::null_connection mean sock successfully.
+		if (connected_at_) {
+			if (conn_ != network::null_connection) {
+				state_ = s_ready;
+
+			} else {
+				state_ = s_none;
+			}
+		}
+
+	} else if (state_ == s_ready) {
+		network::connection ret = network::receive_data(buf, conn_);
+		if (ret != network::null_connection) {
+			data = &buf[0];
+			len = buf.size();
+		}
+	}
+
+	// when no data, as timer.
+	bool halt = false;
+	for (std::vector<tlobby::thandler*>::const_reverse_iterator rit = lobby->handlers_.rbegin(); rit != lobby->handlers_.rend(); ++ rit) {
+		tlobby::thandler& h = **rit;
+		halt = h.handle_raw2(at_, t_data, data, len);
+		if (halt) {
+			break;
+		}
+	}
 }
 
 SOCKET_STATE tlobby::thttp_sock::receive_buf(std::vector<char>& buf)
@@ -2053,6 +2101,14 @@ SOCKET_STATE tlobby::thttp_sock::receive_buf(std::vector<char>& buf)
 	}
 
 	return SOCKET_READY;
+}
+
+void tlobby::thttp_sock::reset_connect()
+{
+	if (conn_ != network::null_connection) {
+		tsock::reset_connect();
+	}
+	set_host(null_str, INVALID_PORT);
 }
 
 void tlobby::ttransit_sock::process()
@@ -2441,14 +2497,28 @@ void tlobby::process(events::pump_info&)
 	for (std::vector<tsock*>::const_iterator it = socks_.begin(); it != socks_.end(); ++ it) {
 		tsock* sock = *it;
 		try {
-			sock->process();
+			if (sock->port_ != INVALID_PORT && !sock->host_.empty()) {
+				sock->process();
+			}
 		} catch (network::error& e) {
+			// error sock maybe not current sock!
+			if (sock->conn_ != e.socket) {
+				sock = &get_connection_details(e.socket);
+			}
 			std::string err_str = e.message;
 			if (e.message.empty()) {
 				err_str = "Unspecial error", "red";
 			}
 			sock->process_error(err_str);
 		}
+	}
+}
+
+void tlobby::broadcast_handle_status(int at, tsock::ttype type)
+{
+	for (std::vector<tlobby::thandler*>::const_reverse_iterator rit = handlers_.rbegin(); rit != handlers_.rend(); ++ rit) {
+		tlobby::thandler& h = **rit;
+		h.handle_status(at, type);
 	}
 }
 

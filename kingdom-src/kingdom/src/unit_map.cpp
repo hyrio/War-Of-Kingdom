@@ -1439,6 +1439,34 @@ void unit_map::ai_capture_aggressed(artifical& aggressed, int side, bool to_reco
 	}
 }
 
+bool unit_map::terrain_matches(const map_location& loc, const t_translation::t_match& terrain_types_match) const
+{
+	unit_map::const_iterator u_itor = find(loc, false);
+	t_translation::t_terrain terrain = t_translation::NONE_TERRAIN;
+
+	if (!u_itor.valid()) {
+		u_itor = find(loc);
+	}
+	if (u_itor.valid()) {
+		unit* u = dynamic_cast<unit*>(&*u_itor);
+		terrain = u->terrain();
+	}
+	// In despite of terrain is t_translation::NONE_TERRAIN, terrain_matches maybe return false.
+	// when overlay isn't 0xffffffff, for example *^_fme.
+	return t_translation::terrain_matches(terrain, terrain_types_match);
+}
+
+void unit_map::build_terrains(std::map<t_translation::t_terrain, std::vector<map_location> >& terrain_by_type)
+{
+	for (unit_map::const_iterator u_itor = begin(); u_itor != end(); u_itor ++) {
+		const unit* u = dynamic_cast<const unit*>(&*u_itor);
+		const t_translation::t_terrain& t = u->terrain();
+		if (t != t_translation::NONE_TERRAIN) {
+			terrain_by_type[t].push_back(u->get_location());
+		}
+	}
+}
+
 int mr_data::min_interior_requirement = 3;
 int mr_data::max_interior_requirement = 4;
 int mr_data::min_front_requirement = 4;
@@ -1741,38 +1769,4 @@ void tmess_data::combine(const tmess_data& that)
 	friend_arts += that.friend_arts;
 	enemies += that.enemies;
 	enemy_arts += that.enemy_arts;
-}
-
-bool cb_terrain_matches(const map_location& loc, const t_translation::t_match& terrain_types_match)
-{
-	unit_map& units = *resources::units;
-	unit_map::const_iterator u_itor = units.find(loc, false);
-	t_translation::t_terrain terrain = t_translation::NONE_TERRAIN;
-
-	if (!u_itor.valid()) {
-		u_itor = units.find(loc);
-	}
-	if (u_itor.valid()) {
-		unit* u = dynamic_cast<unit*>(&*u_itor);
-		terrain = u->terrain();
-	}
-	// In despite of terrain is t_translation::NONE_TERRAIN, terrain_matches maybe return false.
-	// when overlay isn't 0xffffffff, for example *^_fme.
-	return terrain_matches(terrain, terrain_types_match);
-}
-
-void cb_build_terrains(std::map<t_translation::t_terrain, std::vector<map_location> >& terrain_by_type)
-{
-	if (!resources::units) {
-		return;
-	}
-
-	unit_map& units = *resources::units;
-	for (unit_map::const_iterator u_itor = units.begin(); u_itor != units.end(); u_itor ++) {
-		const unit* u = dynamic_cast<const unit*>(&*u_itor);
-		const t_translation::t_terrain& t = u->terrain();
-		if (t != t_translation::NONE_TERRAIN) {
-			terrain_by_type[t].push_back(u->get_location());
-		}
-	}
 }

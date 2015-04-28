@@ -300,6 +300,7 @@ void tsubcontinent::refresh_city_table(twindow& window, const tparam& param, int
 		ttoggle_panel* toggle = dynamic_cast<ttoggle_panel*>(grid_ptr->find("_toggle", true));
 		toggle->set_data(city.cityno);
 	}
+	list.invalidate_layout(true);
 	
 	if (!param.cities.empty()) {
 		if (cursel >= (int)param.cities.size()) {

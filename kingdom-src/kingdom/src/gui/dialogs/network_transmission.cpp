@@ -57,12 +57,27 @@ void ttransfer::pre_show(twindow& window)
 		, boost::ref(window)));
 
 	window_ = window;
+	tlobby::thandler::join();
 }
 
-void ttransfer::process(events::pump_info&)
+void ttransfer::handle_status(int at, tsock::ttype type)
 {
-	connection_.poll();
-	if (!window_) return;
+	if (at != tlobby::tag_http) {
+		return;
+	}
+	if (type == tsock::t_disconnected) {
+		window_.get().set_retval(twindow::CANCEL);
+	}
+}
+
+bool ttransfer::handle_raw2(int at, tsock::ttype type, const char* data, int len)
+{
+	if (at != tlobby::tag_http) {
+		return false;
+	}
+
+	connection_.poll(data, len);
+	if (!window_) return false;
 	if (connection_.done()) {
 		window_.get().set_retval(twindow::OK);
 
@@ -94,12 +109,13 @@ void ttransfer::process(events::pump_info&)
 
 		}
 	}
+	return false;
 }
 
 void ttransfer::cancel(gui2::twindow& window)
 {
 	window_.reset();
-	connection_.cancel();
+	connection_.set_done();
 
 	window.set_retval(twindow::CANCEL);
 }

@@ -394,6 +394,9 @@ public:
 	// bool compare_front_cities(const mr_data& mr, artifical& a, artifical& b);
 	bool compare_enemy_cities(const mr_data& mr, artifical& a, artifical& b);
 
+	bool terrain_matches(const map_location& loc, const t_translation::t_match& terrain_types_match) const;
+	void build_terrains(std::map<t_translation::t_terrain, std::vector<map_location> >& terrain_by_type);
+
 private:
 	// used to spread all city
 	play_controller& controller_;

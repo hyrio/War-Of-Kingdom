@@ -308,6 +308,23 @@ size_t connection::bytes_to_read()
 	}
 }
 
+class connection_open: public connection
+{
+public:
+	connection_open()
+		: connection(network::null_connection)
+	{}
+
+	void poll(const char* data, int len);
+};
+
+void connection_open::poll(const char* data, int len)
+{
+	if (lobby->http.state() != tsock::s_create) {
+		set_done();
+	}
+}
+
 class connection_recv_buf : public connection
 {
 public:
@@ -316,16 +333,17 @@ public:
 		, buf_(buf)
 	{}
 
-	void poll();
+	void poll(const char* data, int len);
 private:
 	std::vector<char>& buf_;
 };
 
-void connection_recv_buf::poll()
+void connection_recv_buf::poll(const char* data, int len)
 {
-	network::connection sock = network::receive_data(buf_, lobby->http.conn());
-	if (sock != network::null_connection) {
-		cancel();
+	if (data) {
+		buf_.resize(len);
+		memcpy(&buf_[0], data, len);
+		set_done();
 	}
 }
 
@@ -341,7 +359,7 @@ public:
 	}
 
 	bool handle(int tag, tsock::ttype type, const config& data);
-	void poll();
+	void poll(const char* data, int len);
 	network::connection res() const { return res_; }
 private:
 	config& data_;
@@ -359,10 +377,10 @@ bool connection_recv_cfg::handle(int tag, tsock::ttype type, const config& data)
 	return false;
 }
 
-void connection_recv_cfg::poll()
+void connection_recv_cfg::poll(const char* data, int len)
 {
-	if (res_ != network::null_connection) {
-		cancel();
+	if (data) {
+		set_done();
 	}
 }
 
@@ -374,38 +392,17 @@ public:
 		, len_(len)
 	{}
 
-	void poll();
+	void poll(const char* data, int len);
 
 private:
 	int len_;
 };
 
-void connection_send_buf::poll()
+void connection_send_buf::poll(const char* data, int len)
 {
 	network::statistics stat = network::get_send_stats(connection_num_);
 	if (stat.current == len_) {
-		cancel();
-	}
-}
-
-class connection_open : public connection
-{
-public:
-	connection_open(threading::async_operation_ptr op)
-		: connection(network::null_connection)
-		, op_(op)
-	{}
-
-	void poll();
-private:
-	threading::async_operation_ptr op_;
-};
-
-void connection_open::poll()
-{
-	const threading::condition::WAIT_TIMEOUT_RESULT res = op_->finished_.wait_timeout(op_->get_mutex(), 20);
-	if (res == threading::condition::WAIT_OK || op_->finishedVar_) {
-		cancel();
+		set_done();
 	}
 }
 
@@ -413,40 +410,6 @@ void connection_open::poll()
 
 namespace dialogs
 {
-
-class connect_waiter : public threading::waiter
-{
-public:
-	connect_waiter(display& disp, const std::string& msg) : disp_(disp), msg_(msg)
-	{}
-	ACTION process(threading::async_operation_ptr op);
-
-private:
-	display& disp_;
-	std::string msg_;
-};
-
-connect_waiter::ACTION connect_waiter::process(threading::async_operation_ptr op)
-{
-	waiter::process(op);
-
-	try {
-		network_asio::connection_open conn(op);
-		gui2::tnetwork_transmission dlg(conn, msg_, "");
-		dlg.show(disp_.video());
-		if (dlg.get_retval() == gui2::twindow::OK) {
-			return WAIT;
-		}
-
-	} catch (network::error& e) {
-		std::string err = e.message;
-		if (e.message.empty()) {
-			err = "Unspecial error";
-		}
-		gui2::show_transient_message(disp_.video(), "", gettext(err.c_str()));
-	}
-	return ABORT;
-}
 
 std::string form_connect_to_title()
 {
@@ -478,24 +441,13 @@ std::string form_receive_from_title()
 	return vgettext("Reading from $server...", i18n_symbols);
 }
 
-network::connection network_connect_dialog(display& disp, const std::string&, const std::string& hostname, int port, bool quiet)
+bool network_connect_dialog(display& disp, const std::string&, const std::string& hostname, int port, bool quiet)
 {
-	network::connection conn = network::null_connection;
-
-	connect_waiter waiter(disp, form_connect_to_title());
-	try {
-		network::connect(lobby->http, hostname, port, waiter);
-		conn = lobby->http.conn();
-	} catch (network::error& e) {
-		std::string err = e.message;
-		if (e.message.empty()) {
-			err = "Unspecial error";
-		}
-		if (!quiet) {
-			gui2::show_transient_message(disp.video(), "", gettext(err.c_str()));
-		}
-	}
-	return conn;
+	network_asio::connection_open conn;
+	gui2::tnetwork_transmission dlg(conn, form_connect_to_title(), "");
+	dlg.show(disp.video());
+	
+	return lobby->http.conn() != network::null_connection;
 }
 
 void network_receive_dialog(display& disp, const std::string& msg, std::vector<char>& buf, network::connection connection_num, int hidden_ms)

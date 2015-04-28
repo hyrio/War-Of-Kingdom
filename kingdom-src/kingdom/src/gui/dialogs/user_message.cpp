@@ -118,7 +118,7 @@ namespace gui2 {
 REGISTER_DIALOG(user_message)
 
 tuser_message::tuser_message(display& disp, hero_map& heros, const config& game_config)
-	: tchat_(disp, group, MIN_PAGE, CHAT_PAGE, CHATING_PAGE)
+	: tchat_(disp, MIN_PAGE, CHAT_PAGE, CHATING_PAGE)
 	, disp_(disp)
 	, heros_(heros)
 	, game_config_(game_config)
@@ -472,18 +472,16 @@ void tuser_message::detail_group(twindow& window)
 	}
 }
 
-bool tuser_message::handle_raw(int at, tsock::ttype type, const char* param[])
+void tuser_message::handle_status(int at, tsock::ttype type)
 {
 	if (at != tlobby::tag_chat) {
-		return false;
+		return;
 	}
 
-	if (type == tsock::t_connected || type == tsock::t_disconnected) {
-		update_network_status(*page_panel_->get_window(), type == tsock::t_connected);
-		process_network_status(type == tsock::t_connected);
-	}
+	update_network_status(*page_panel_->get_window(), type == tsock::t_connected);
+	process_network_status(type == tsock::t_connected);
 
-	return tchat_::handle_raw(at, type, param);
+	tchat_::handle_status(at, type);
 }
 
 void tuser_message::update_network_status(twindow& window, bool connected)

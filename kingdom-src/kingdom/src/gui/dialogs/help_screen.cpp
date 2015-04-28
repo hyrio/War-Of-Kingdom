@@ -39,10 +39,6 @@
 
 #include <algorithm>
 
-namespace unit_display {
-extern int start_title_screen_anim();
-}
-
 namespace gui2 {
 
 /*WIKI

@@ -64,9 +64,6 @@ public:
 			const std::vector<twidget*>& call_stack);
 
 	/** Inherited from twidget. */
-	void request_reduce_width(const unsigned maximum_width);
-
-	/** Inherited from twidget. */
 	twidget* find_at(const tpoint& coordinate, const bool must_be_active);
 
 	/** Inherited from twidget. */

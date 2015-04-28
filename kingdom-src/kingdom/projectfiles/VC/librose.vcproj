@@ -164,6 +164,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\librose\base_instance.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\librose\base_map.cpp"
 				>
 			</File>
@@ -1088,6 +1092,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\librose\base_instance.hpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\librose\base_map.hpp"
 				>
 			</File>
@@ -1944,10 +1952,6 @@
 				</File>
 				<File
 					RelativePath="..\..\librose\gui\auxiliary\formula.hpp"
-					>
-				</File>
-				<File
-					RelativePath="..\..\librose\gui\auxiliary\layout_exception.hpp"
 					>
 				</File>
 				<File
@@ -5080,10 +5084,6 @@
 				</File>
 				<File
 					RelativePath="..\..\librose\gui\widgets\window.hpp"
-					>
-				</File>
-				<File
-					RelativePath="..\..\librose\gui\widgets\window_private.hpp"
 					>
 				</File>
 			</Filter>

@@ -535,6 +535,8 @@ public:
 	int min_zoom() const { return min_zoom_; }
 	int max_zoom() const { return max_zoom_; }
 
+	virtual void shrouded_and_fogged(const map_location& loc, bool& shrouded, bool& fogged) const {}
+
 protected:
 	/** Clear the screen contents */
 	void clear_screen();

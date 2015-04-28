@@ -18,6 +18,7 @@
 
 #include "gui/dialogs/dialog.hpp"
 #include "gui/widgets/control.hpp"
+#include "lobby.hpp"
 #include <boost/optional.hpp>
 
 class game_display;
@@ -32,10 +33,11 @@ namespace gui2 {
 
 class tbutton;
 
-class ttransfer : public events::pump_monitor
+class ttransfer : public tlobby::thandler
 {
 public:
-	virtual void process(events::pump_info&);
+	void handle_status(int at, tsock::ttype type);
+	bool handle_raw2(int at, tsock::ttype type, const char* data, int len);
 	
 	explicit ttransfer(network_asio::connection& connection, int hidden_ms);
 

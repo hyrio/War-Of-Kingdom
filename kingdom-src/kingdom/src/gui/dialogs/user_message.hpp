@@ -39,7 +39,7 @@ class tscrollbar_panel;
  *
  * @todo Evaluate whether we can handle more buttons in this class.
  */
-class tuser_message : public tchat_, public tlobby::thandler
+class tuser_message : public tchat_
 {
 public:
 	explicit tuser_message(display& disp, hero_map& heros, const config& game_config);
@@ -78,7 +78,7 @@ private:
 
 	void update_network_status(twindow& window, bool connected);
 
-	bool handle_raw(int at, tsock::ttype type, const char* param[]);
+	void handle_status(int at, tsock::ttype type);
 
 private:
 	display& disp_;

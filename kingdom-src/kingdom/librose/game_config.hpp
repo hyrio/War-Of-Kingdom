@@ -32,6 +32,7 @@ class color_range;
 namespace game_config
 {
 	extern std::string app;
+	extern std::string app_msgid;
 	extern std::string app_channel;
 	extern int base_income;
 	extern int village_income;

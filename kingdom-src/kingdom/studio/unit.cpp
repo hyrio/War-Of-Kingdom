@@ -537,10 +537,10 @@ void unit::generate_widget(config& cfg) const
 	sub.merge_attributes(cell_.cfg);
 
 	if (is_scroll()) {
-		if (cell_.widget.horizontal_mode != gui2::tscrollbar_container::auto_visible_first_run) {
+		if (cell_.widget.horizontal_mode != gui2::tscrollbar_container::auto_visible) {
 			sub["horizontal_scrollbar_mode"] = gui2::horizontal_mode.find(cell_.widget.horizontal_mode)->second.id;
 		}
-		if (cell_.widget.vertical_mode != gui2::tscrollbar_container::auto_visible_first_run) {
+		if (cell_.widget.vertical_mode != gui2::tscrollbar_container::auto_visible) {
 			sub["vertical_scrollbar_mode"] = gui2::vertical_mode.find(cell_.widget.vertical_mode)->second.id;
 		}
 	}

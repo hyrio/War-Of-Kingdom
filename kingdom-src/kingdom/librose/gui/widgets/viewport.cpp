@@ -154,10 +154,6 @@ void tviewport::child_populate_dirty_list(
 	widget_.populate_dirty_list(caller, child_call_stack);
 }
 
-void tviewport::request_reduce_width(const unsigned /*maximum_width*/)
-{
-}
-
 twidget* tviewport::find_at(const tpoint& coordinate, const bool must_be_active)
 {
 	return tviewport_implementation::find_at(this, coordinate, must_be_active);

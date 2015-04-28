@@ -5514,3 +5514,9 @@ msgstr ""
 
 msgid "Transit"
 msgstr ""
+
+msgid "War of Kingdom"
+msgstr ""
+
+msgid "Rose"
+msgstr ""
